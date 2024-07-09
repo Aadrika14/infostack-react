@@ -9,7 +9,7 @@ import {
 } from "@google/generative-ai";
 
 const MODEL_NAME = "gemini-1.5-pro-latest";
-const API_KEY = "AIzaSyD1PAMqBdlI9VaRVvZG9oWthoU1C4ISdN4";
+const API_KEY = "AIzaSyAaMV9taILoAt_m86O4oZ99rvZ0rhHS-iI";
 
 async function runChat(prompt) {
   const genAI = new GoogleGenerativeAI(API_KEY);
@@ -47,11 +47,24 @@ async function runChat(prompt) {
     history: [
     ],
   });
-
+ 
+  
   const result = await chat.sendMessage(prompt);
   const response = result.response;
   console.log(response.text());
   return response.text();
+}
+async function runChatWithRetry(prompt, retries = 3, backoff = 1000) {
+  try {
+    const response = await runChat(prompt); // Replace with your function that makes API calls
+    return response;
+  } catch (error) {
+    if (error.response && error.response.status === 429 && retries > 0) {
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return runChatWithRetry(prompt, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
 }
 
 export default runChat;
